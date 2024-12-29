@@ -1,0 +1,1014 @@
+local v_u_1 = require(game:GetService("ReplicatedStorage"):WaitForChild("MultiboxFramework"))
+local v2 = game:GetService("RunService")
+while not v_u_1.Loaded do
+	v2.Heartbeat:Wait()
+end
+local _ = v_u_1.AccurateWait
+local v_u_3 = v_u_1:WaitForModule("GuiFramesManager"):WaitForManager("UIFramesManager")
+local v_u_4 = script.Parent
+function CanOpenFrame()
+	-- upvalues: (copy) v_u_1
+	if v_u_1.FastFlags:GetFastFlag("PostOfficeEnabled") ~= false then
+		return true
+	end
+	v_u_1.Signal.Fire("BigNotify", "Post Office is currently disabled! Come back later.", "Notify")
+	return false
+end
+function OpenFrame()
+	-- upvalues: (copy) v_u_4
+	v_u_4.Visible = true
+end
+function CloseFrame()
+	-- upvalues: (copy) v_u_4
+	v_u_4.Visible = false
+end
+v_u_3:AddFrame("PostOffice", {
+	["CanOpen"] = CanOpenFrame,
+	["OpenCallback"] = OpenFrame,
+	["CloseCallback"] = CloseFrame,
+	["CanAutoClose"] = true
+})
+local v_u_5 = v_u_1.FastSignal.new()
+v_u_3.FrameOpened:Connect(function(p6)
+	-- upvalues: (copy) v_u_5, (copy) v_u_1
+	if p6 == "PostOffice" then
+		v_u_5:Fire()
+		v_u_1.Network.Fire("PostOffice_OpenedFrame")
+	end
+end)
+v_u_3.FrameClosed:Connect(function(p7)
+	-- upvalues: (copy) v_u_5, (copy) v_u_1
+	if p7 == "PostOffice" then
+		v_u_5:Fire()
+		v_u_1.Network.Fire("PostOffice_ClosedFrame")
+	end
+end)
+v_u_4:WaitForChild("Hider").Activated:Connect(function()
+	-- upvalues: (copy) v_u_3
+	v_u_3:CloseFrame("PostOffice")
+end)
+v_u_4:WaitForChild("CloseButton").Activated:Connect(function()
+	-- upvalues: (copy) v_u_3
+	v_u_3:CloseFrame("PostOffice")
+end)
+v_u_1.FastFlags.Changed:Connect(function()
+	-- upvalues: (copy) v_u_1, (copy) v_u_3
+	if v_u_1.FastFlags:GetFastFlag("PostOfficeEnabled") == false and v_u_3:IsFrameOpen("PostOffice") == true then
+		v_u_1.Signal.Fire("BigNotify", "Post Office is currently disabled! Come back later.", "Notify")
+		v_u_3:CloseFrame("PostOffice")
+	end
+end)
+local v8 = workspace:WaitForChild("Zones"):WaitForChild("Lobby"):WaitForChild("PostOfficeZone")
+local v9 = v_u_1.Zone.new(v8)
+v9.localPlayerEntered:Connect(function()
+	-- upvalues: (copy) v_u_3
+	v_u_3:OpenFrame("PostOffice")
+end)
+v9.localPlayerExited:Connect(function()
+	-- upvalues: (copy) v_u_3
+	v_u_3:CloseFrame("PostOffice")
+end)
+local v_u_10 = v_u_1.PlrDataHandler:WaitForLocalDataReplica()
+local v_u_11 = v_u_1:WaitForModule("Janitor")
+local v12 = v_u_1:WaitForModule("FastSignal")
+local v13 = v_u_1:WaitForModule("CustomSearch")
+local v_u_14 = v_u_1:WaitForModule("Inventory")
+local v15 = v_u_1:WaitForModule("CoolCache")
+local v_u_16 = v_u_1:WaitForModule("FrameworkGui")
+local v_u_17 = v15.UserDataCache
+local v_u_18 = v_u_14.CopyDataKeys
+local v_u_19 = v12.new()
+local v_u_20 = v12.new()
+local v_u_21 = 0
+local v_u_22 = nil
+local function v_u_26(p23, p24, p25)
+	-- upvalues: (ref) v_u_22, (copy) v_u_19, (copy) v_u_20
+	if p23 and p24 then
+		v_u_22 = { p23, p24, p25 }
+		v_u_19:Fire(p24)
+	else
+		v_u_22 = nil
+		v_u_20:Fire()
+	end
+	refreshSearch()
+end
+local v_u_27 = {}
+local v_u_28 = {}
+local v_u_29 = {}
+local v_u_30 = v_u_4.Menus.SendPackages.PlayerUnits.PlayerUnits
+local v_u_31 = v_u_4.Menus.SendPackages.SearchBar.InputMessage
+local v_u_32 = nil
+local v_u_33 = { "nonsigned", "signed" }
+local v_u_34 = v13.new()
+v_u_34:SetQueryFunction(function(p35, p36)
+	-- upvalues: (copy) v_u_18
+	if not p35 then
+		return true
+	end
+	if p35.MustBeSigned and p36.CopyData[v_u_18.SignedBy] == nil then
+		return false
+	end
+	if p35.MustBeUnsigned and p36.CopyData[v_u_18.SignedBy] ~= nil then
+		return false
+	end
+	local v37 = string.lower(p35.SearchTerm)
+	local v38 = string.find(string.lower(p36.ItemDisplay), v37, nil, true) and true or false
+	return string.find(string.lower(p36.Rarity), v37, nil, true) and true or v38
+end)
+function refreshSearch()
+	-- upvalues: (copy) v_u_34, (ref) v_u_32, (ref) v_u_22
+	local v39 = v_u_34:Search(v_u_32)
+	for _, v40 in pairs(v39) do
+		local v41 = v40[1]
+		local v42 = v40[2]
+		if v41.ItemFrame then
+			if v_u_22 then
+				v41.ItemFrame.Visible = v_u_22[2] == v41.UID
+			else
+				v41.ItemFrame.Visible = v42 == true
+			end
+		end
+	end
+end
+local function v_u_71()
+	-- upvalues: (copy) v_u_14, (ref) v_u_29, (copy) v_u_1, (copy) v_u_27, (copy) v_u_26, (copy) v_u_11, (copy) v_u_28, (copy) v_u_19, (copy) v_u_20, (copy) v_u_34, (ref) v_u_32, (copy) v_u_18, (copy) v_u_30
+	local v43 = v_u_14.GetAllCopies({ "Troops", "Crates" })
+	local v44 = {}
+	for _, v45 in pairs(v43) do
+		local v_u_46 = v45[1]
+		local v47 = v45[2]
+		local v_u_48 = v45[3]
+		local v49 = v45[4]
+		local v50 = v49 and v49.SH and true or false
+		local v51 = v_u_14.GetItemConfig(v_u_46, v47)
+		if v51 ~= nil then
+			local v_u_52 = v51.DisplayName or v47
+			local v53 = v51.Rarity or "Basic"
+			local v54 = v51.Order or 999
+			local v55 = v51.Icon
+			local v56 = v_u_29[v_u_48]
+			if v56 == nil then
+				local v57
+				v56, v57 = v_u_1.CreateTradingItemFrame(v53, v55, v50)
+				local v_u_58 = v57
+				local v59 = v_u_58
+				local v60 = Instance.new("TextButton")
+				v60.Name = "InteractiveButton"
+				v60.Transparency = 1
+				v60.Size = UDim2.fromScale(1, 1)
+				v60.ZIndex = v59.ZIndex + 2
+				v60.Parent = v59
+				local v61 = v_u_1.InfoTooltip.new()
+				v_u_1.GenerateItemTooltip(v_u_46, v47, v51, v49, v61)
+				v_u_27[v_u_48] = v61
+				v61:BindToGuiObject(v60)
+				v56.Name = v_u_48
+				v_u_58.TroopIcon.Image = v51.Icon
+				local v_u_62 = v_u_14.IsCopyTransferable(v_u_46, v47, v49)
+				v_u_58.CannotTrade.Visible = not v_u_62
+				if v_u_62 then
+					v56.LayoutOrder = 99999 - v54
+				else
+					v56.LayoutOrder = 99999 - (v54 - 9999)
+				end
+				v60.Activated:Connect(function()
+					-- upvalues: (ref) v_u_58, (copy) v_u_62, (ref) v_u_26, (copy) v_u_46, (copy) v_u_48, (copy) v_u_52
+					if v_u_58.IsInTrade.Visible == false then
+						if v_u_62 then
+							v_u_26(v_u_46, v_u_48, v_u_52)
+							return
+						end
+					else
+						v_u_26()
+					end
+				end)
+				local v63 = v_u_11.new()
+				v_u_28[v_u_48] = v63
+				v63:Add(v_u_19:Connect(function(p64)
+					-- upvalues: (copy) v_u_48, (ref) v_u_58
+					if v_u_48 == p64 then
+						v_u_58.IsInTrade.Visible = true
+					end
+				end))
+				v63:Add(v_u_20:Connect(function(_)
+					-- upvalues: (ref) v_u_58
+					v_u_58.IsInTrade.Visible = false
+				end))
+			end
+			v44[v_u_48] = v56
+			local v65 = {
+				["UID"] = v_u_48,
+				["ItemDisplay"] = v_u_52,
+				["Rarity"] = v53,
+				["CopyData"] = v49,
+				["ItemFrame"] = v56
+			}
+			v_u_34:AddObject(v_u_48, v65)
+			local v66 = v_u_34:DoesMatch(v_u_32, v65)
+			v65.ItemFrame.Visible = v66 == true
+			local v67 = v_u_27[v_u_48]
+			if v67 then
+				if v49[v_u_18.SignedBy] == nil then
+					v67:RemoveItem("Signature")
+				else
+					v67:AddItem("Signature", "Signature", 100, v49[v_u_18.SignedBy])
+				end
+			end
+		end
+	end
+	for v68, v69 in pairs(v_u_29) do
+		if v44[v68] == nil then
+			v69:Destroy()
+			if v_u_28[v68] then
+				v_u_28[v68]:Destroy()
+			end
+			if v_u_27[v68] then
+				v_u_27[v68]:Destroy()
+			end
+			v_u_34:RemoveObject(v68)
+		end
+	end
+	for _, v70 in pairs(v44) do
+		v70.Parent = v_u_30
+	end
+	v_u_29 = v44
+end
+local v_u_72 = false
+v_u_10:ConnectIndexesChanged({ "InventoryItems" }, function()
+	-- upvalues: (copy) v_u_3, (copy) v_u_71, (ref) v_u_72
+	if v_u_3:IsFrameOpen("PostOffice") == true then
+		v_u_71()
+	else
+		v_u_72 = true
+	end
+end)
+if v_u_3:IsFrameOpen("PostOffice") == true then
+	v_u_71()
+else
+	v_u_72 = true
+end
+v_u_3.FrameOpened:Connect(function(p73)
+	-- upvalues: (ref) v_u_72, (copy) v_u_71
+	if p73 == "PostOffice" and v_u_72 then
+		v_u_71()
+	end
+end)
+v_u_31:GetPropertyChangedSignal("Text"):Connect(function()
+	-- upvalues: (copy) v_u_31, (copy) v_u_1, (copy) v_u_33, (ref) v_u_32
+	local v74 = v_u_31.Text
+	if v74 == "" then
+		v_u_32 = nil
+	else
+		local v75, v76 = v_u_1.CustomSearch.EvaluateSearchTerm(v74, v_u_33)
+		v_u_32 = {
+			["SearchTerm"] = v75,
+			["MustBeSigned"] = v76.signed,
+			["MustBeUnsigned"] = v76.nonsigned
+		}
+	end
+	refreshSearch()
+end)
+local v_u_77 = script.Parent:WaitForChild("Menus")
+local v_u_78 = script.Parent:WaitForChild("ButtonSelection")
+local v_u_79 = script.Parent:WaitForChild("SettingsBtn")
+local v_u_80 = { "Offline", "Alerts" }
+local v_u_81 = "None"
+function switchMenu(p82)
+	-- upvalues: (copy) v_u_77, (copy) v_u_78, (copy) v_u_80, (copy) v_u_79, (ref) v_u_81
+	for _, v83 in pairs(v_u_77:GetChildren()) do
+		if v83:IsA("Frame") then
+			v83.Visible = p82 == v83.Name
+		end
+	end
+	v_u_78.Visible = table.find(v_u_80, p82) == nil
+	v_u_79.Visible = table.find(v_u_80, p82) == nil
+	v_u_81 = p82
+end
+switchMenu("Offline")
+local v_u_84 = script.Parent:WaitForChild("ButtonSelection")
+v_u_84.Send.SendButton.Activated:Connect(function()
+	switchMenu("SendPackages")
+end)
+v_u_84.Packages.Packages.Activated:Connect(function()
+	switchMenu("ReceivePackages")
+end)
+script.Parent.SettingsBtn.SettingsButton.SettingsPicture.Activated:Connect(function()
+	switchMenu("Settings")
+end)
+script.Parent.SettingsBtn.SettingsButton.Activated:Connect(function()
+	switchMenu("Settings")
+end)
+function addCommas(p85)
+	local v86 = tostring(p85)
+	repeat
+		local v87
+		v86, v87 = string.gsub(v86, "^(-?%d+)(%d%d%d)", "%1,%2")
+	until v87 == 0
+	return v86
+end
+local function v_u_92(p88)
+	local v89 = string.lower((string.sub(p88, -1)))
+	if tonumber(v89) ~= nil then
+		return tonumber(p88)
+	end
+	local v90 = string.sub(p88, 1, -2)
+	local v91 = tonumber(v90)
+	if v91 == nil then
+		return nil
+	end
+	if v89 == "m" then
+		return v91 * 1000000
+	end
+	if v89 == "k" then
+		return v91 * 1000
+	end
+	if v89 == "b" then
+		return v91 * 1000000000
+	end
+	if v89 == "t" then
+		return v91 * 1000000000000
+	end
+	if v89 == "q" then
+		v91 = v91 * 1000000000000000
+	end
+	return v91
+end
+local v_u_93 = v_u_77:WaitForChild("SendPackages"):WaitForChild("YourGems"):WaitForChild("GemAmount"):WaitForChild("GemAmount")
+local v_u_94 = v_u_77:WaitForChild("SendPackages"):WaitForChild("SendingFrame"):WaitForChild("MessageBox")
+local v_u_95 = v_u_77:WaitForChild("SendPackages"):WaitForChild("SendingFrame"):WaitForChild("Username")
+local v96 = v_u_77:WaitForChild("SendPackages"):WaitForChild("SendingFrame"):WaitForChild("Send"):WaitForChild("SendButton")
+local v_u_97 = v_u_77:WaitForChild("Alerts")
+v_u_93.FocusLost:Connect(function()
+	-- upvalues: (copy) v_u_93, (copy) v_u_92, (copy) v_u_10, (ref) v_u_21
+	local v98 = v_u_93.Text
+	v_u_93.Text = ""
+	local v99 = v_u_92(v98) or 0
+	local v100 = math.round(v99) or 0
+	local v101 = v_u_10:GetData().Currencies.Gems
+	local v102 = math.clamp(v100, 0, v101)
+	v_u_21 = v102
+	v_u_93.PlaceholderText = addCommas(v102)
+end)
+local v103 = v_u_10:GetData().Currencies.Gems
+local v104 = math.clamp(0, 0, v103)
+local v_u_105 = v104
+v_u_93.PlaceholderText = addCommas(v104)
+v_u_94:GetPropertyChangedSignal("Text"):Connect(function()
+	-- upvalues: (copy) v_u_94
+	local v106 = v_u_94.Text
+	string.len(v106)
+	local v107 = v_u_94.Text
+	local v108 = string.len(v107)
+	local v109 = string.gsub(v107, "\n", " ")
+	if v108 > 200 then
+		v109 = string.sub(v109, 1, 200)
+		v108 = 200
+	end
+	v_u_94.Text = v109
+	v_u_94:WaitForChild("CharacterLimit").Text = ("%*/%*"):format(v108, 200)
+end)
+local function v_u_112(p110)
+	-- upvalues: (copy) v_u_97
+	for _, v111 in pairs(v_u_97:GetChildren()) do
+		if v111:IsA("Frame") then
+			v111.Visible = v111.Name == p110
+		end
+	end
+end
+local function v_u_118(p113)
+	-- upvalues: (copy) v_u_11
+	local v114 = v_u_11.new()
+	local v_u_115 = coroutine.running()
+	local v_u_116 = nil
+	for _, v_u_117 in pairs(p113:GetChildren()) do
+		if v_u_117:IsA("TextButton") then
+			v114:Add(v_u_117.Activated:Connect(function()
+				-- upvalues: (ref) v_u_116, (copy) v_u_117, (copy) v_u_115
+				v_u_116 = v_u_117.Name
+				coroutine.resume(v_u_115)
+			end))
+		end
+	end
+	coroutine.yield()
+	v114:Destroy()
+	return v_u_116
+end
+local v_u_119 = {}
+v96.Activated:Connect(function()
+	-- upvalues: (ref) v_u_22, (ref) v_u_105, (copy) v_u_1, (copy) v_u_95, (copy) v_u_94, (copy) v_u_119, (copy) v_u_112, (copy) v_u_97, (copy) v_u_118, (copy) v_u_16, (copy) v_u_26, (copy) v_u_10, (copy) v_u_93, (copy) v_u_3
+	if v_u_22 == nil and v_u_105 <= 0 then
+		v_u_1:WaitForModule("Signal").Fire("CreateNotification", "ErrorNotification", 5, {
+			["Text"] = "You must gift something!"
+		})
+		return
+	else
+		local v_u_120 = v_u_95.Text
+		local v121 = v_u_94.Text
+		local v122 = string.len(v121)
+		local v123 = string.gsub(v121, "\n", " ")
+		if v122 > 200 then
+			v123 = string.sub(v123, 1, 200)
+		end
+		local v_u_124 = nil
+		pcall(function()
+			-- upvalues: (ref) v_u_124, (ref) v_u_119, (copy) v_u_120
+			v_u_124 = v_u_119[v_u_120:lower()] or game:GetService("Players"):GetUserIdFromNameAsync(v_u_120)
+		end)
+		if v_u_124 then
+			v_u_119[v_u_120:lower()] = v_u_124
+			v_u_112("ConfirmSend")
+			switchMenu("Alerts")
+			local v125 = v_u_105 <= 0 and "" or ("%* gems"):format(v_u_105)
+			local v126 = v_u_22 and (v_u_22[3] or "???") or ""
+			local v127 = ("%*%*%*"):format(v126, (v126 == "" or v125 == "") and "" or " and ", v125)
+			v_u_97:WaitForChild("ConfirmSend"):WaitForChild("Info").Text = ("You are giving your %* to %*!"):format(v127, v_u_120)
+			local v128 = v_u_118(v_u_97:WaitForChild("ConfirmSend"):WaitForChild("Options"))
+			switchMenu("SendPackages")
+			if v128 == "Confirm" then
+				v_u_16.StartLoading("PostOffice_SendMail", "Sending Mail... Do not leave!")
+				local v129 = v_u_1.Network.Invoke
+				local v130 = "PostOffice_SendGift"
+				local v131 = v_u_124
+				local v132 = v_u_22
+				if v132 then
+					v132 = v_u_22[1]
+				end
+				local v133 = v_u_22
+				if v133 then
+					v133 = v_u_22[2]
+				end
+				local v134, v135 = v129(v130, v131, v132, v133, v_u_105, v123)
+				v_u_16.StopLoading("PostOffice_SendMail")
+				v_u_26()
+				local v136 = v_u_10:GetData().Currencies.Gems
+				local v137 = math.clamp(0, 0, v136)
+				v_u_105 = v137
+				v_u_93.PlaceholderText = addCommas(v137)
+				v_u_94.Text = ""
+				v_u_95.Text = ""
+				if v134 == true then
+					v_u_1:WaitForModule("Signal").Fire("CreateNotification", "SuccessNotification", 5, {
+						["Text"] = "\226\156\133 Mail successfully sent! \226\156\133"
+					})
+				elseif v135 then
+					if v135 == "TooManyPackages" then
+						v_u_112("Error")
+						switchMenu("Alerts")
+						v_u_97:WaitForChild("Error"):WaitForChild("PostOfficeFull").Text = ("%* has too many packages waiting to be collected!"):format(v_u_120)
+						v_u_97:WaitForChild("Error"):WaitForChild("NotAcceptingItem").Visible = false
+						v_u_97:WaitForChild("Error"):WaitForChild("PostOfficeFull").Visible = true
+						v_u_118(v_u_97:WaitForChild("Error"):WaitForChild("Options"))
+						switchMenu("SendPackages")
+					elseif v135 == "NotAcceptingItem" then
+						v_u_112("Error")
+						switchMenu("Alerts")
+						v_u_97:WaitForChild("Error"):WaitForChild("NotAcceptingItem").Text = ("%* is not accepting this item!"):format(v_u_120)
+						v_u_97:WaitForChild("Error"):WaitForChild("NotAcceptingItem").Visible = true
+						v_u_97:WaitForChild("Error"):WaitForChild("PostOfficeFull").Visible = false
+						v_u_118(v_u_97:WaitForChild("Error"):WaitForChild("Options"))
+						switchMenu("SendPackages")
+					else
+						local v138 = v_u_3:IsFrameOpen("PostOffice")
+						if v138 == true then
+							v_u_3:CloseFrame("PostOffice")
+						end
+						v_u_1.Signal.Invoke("BigNotify", v135, "Notify")
+						if v138 == true then
+							v_u_3:OpenFrame("PostOffice")
+						end
+					end
+				end
+			end
+		else
+			v_u_1:WaitForModule("Signal").Fire("CreateNotification", "ErrorNotification", 5, {
+				["Text"] = "The user does not exist!"
+			})
+			return
+		end
+	end
+end)
+local v_u_139 = v_u_1.Network.Invoke("PostOffice_GetAvailable")
+if v_u_139 == true then
+	if v_u_81 == "Offline" then
+		switchMenu("SendPackages")
+	end
+else
+	switchMenu("Offline")
+end
+v_u_1.Network.Fired("PostOffice_AvailabilityChanged"):Connect(function(p140)
+	-- upvalues: (ref) v_u_139, (ref) v_u_81
+	v_u_139 = p140
+	if v_u_139 == true then
+		if v_u_81 == "Offline" then
+			switchMenu("SendPackages")
+		end
+	else
+		switchMenu("Offline")
+	end
+end)
+local v141 = v_u_1.SharedSettings.MailboxSettings
+local v142 = v141.Rarities
+local v143 = v141.Types
+local v_u_144 = v_u_22
+local v145 = 0
+local v_u_146 = {}
+for _, v_u_147 in pairs(v142) do
+	v145 = v145 + 1
+	local v148 = script:WaitForChild("SettingTemplate"):Clone()
+	v148.Name = v_u_147
+	v148.RarityName.Text = v_u_147
+	v148.LayoutOrder = v145
+	v148.BackgroundTransparency = v145 % 2 == 1 and 0.75 or 1
+	v_u_146[v_u_147] = v148
+	v148.Options.Yes.YesButton.Activated:Connect(function()
+		-- upvalues: (copy) v_u_1, (copy) v_u_147
+		v_u_1.Network.Fire("PostOffice_UpdateSettings", "Rarities", v_u_147, true)
+	end)
+	v148.Options.No.NoButton.Activated:Connect(function()
+		-- upvalues: (copy) v_u_1, (copy) v_u_147
+		v_u_1.Network.Fire("PostOffice_UpdateSettings", "Rarities", v_u_147, false)
+	end)
+	v148.Parent = v_u_77:WaitForChild("Settings"):WaitForChild("Settings"):WaitForChild("AcceptingRarity"):WaitForChild("Rarities")
+end
+local v149 = 0
+local v_u_150 = {}
+for _, v_u_151 in pairs(v143) do
+	v149 = v149 + 1
+	local v152 = script:WaitForChild("SettingTemplate"):Clone()
+	v152.Name = v_u_151
+	v152.RarityName.Text = v_u_151
+	v152.LayoutOrder = v149
+	v152.BackgroundTransparency = v149 % 2 == 1 and 0.75 or 1
+	v_u_150[v_u_151] = v152
+	v152.Options.Yes.YesButton.Activated:Connect(function()
+		-- upvalues: (copy) v_u_1, (copy) v_u_151
+		v_u_1.Network.Fire("PostOffice_UpdateSettings", "Types", v_u_151, true)
+	end)
+	v152.Options.No.NoButton.Activated:Connect(function()
+		-- upvalues: (copy) v_u_1, (copy) v_u_151
+		v_u_1.Network.Fire("PostOffice_UpdateSettings", "Types", v_u_151, false)
+	end)
+	v152.Parent = v_u_77:WaitForChild("Settings"):WaitForChild("Settings"):WaitForChild("AcceptingType"):WaitForChild("Other")
+end
+local function v_u_160()
+	-- upvalues: (copy) v_u_10, (copy) v_u_146, (copy) v_u_150
+	local v153 = v_u_10:GetData()
+	for v154, v155 in pairs(v_u_146) do
+		local v156 = v153.PostOfficeSettings.Rarities[v154] == false
+		v155.Options.Yes.YesButton:WaitForChild("Active").Enabled = not v156
+		v155.Options.No.NoButton:WaitForChild("Active").Enabled = v156
+	end
+	for v157, v158 in pairs(v_u_150) do
+		local v159 = v153.PostOfficeSettings.Types[v157] == false
+		v158.Options.Yes.YesButton:WaitForChild("Active").Enabled = not v159
+		v158.Options.No.NoButton:WaitForChild("Active").Enabled = v159
+	end
+end
+v_u_160()
+v_u_10:ConnectIndexesChanged({ "PostOfficeSettings" }, function(_, _)
+	-- upvalues: (copy) v_u_160
+	v_u_160()
+end)
+local v_u_161 = v_u_1.Network.Invoke("PostOffice_GetInbox")
+local v_u_162
+if v_u_161 then
+	v_u_162 = true
+else
+	v_u_161 = {}
+	v_u_162 = false
+end
+local v_u_163 = v_u_77:WaitForChild("ReceivePackages")
+local v_u_164 = v_u_163:WaitForChild("ScrollingFrame")
+local v_u_165 = nil
+local v_u_166 = { "nonsigned", "signed", "gems" }
+local v_u_167 = v13.new()
+v_u_167:SetQueryFunction(function(p168, p169)
+	-- upvalues: (copy) v_u_18
+	if not p168 then
+		return true
+	end
+	if (p168.MustBeSigned or p168.MustBeUnsigned) and p169.CopyData == nil then
+		return false
+	end
+	if p168.MustBeSigned and p169.CopyData[v_u_18.SignedBy] == nil then
+		return false
+	end
+	if p168.MustBeUnsigned and p169.CopyData[v_u_18.SignedBy] ~= nil then
+		return false
+	end
+	if p168.MustHaveGems and p169.Gems == nil then
+		return false
+	end
+	local v170 = string.lower(p168.SearchTerm)
+	local v171 = p169.ItemDisplay and string.find(string.lower(p169.ItemDisplay), v170, nil, true) and true or false
+	local v172 = p169.Rarity and string.find(string.lower(p169.Rarity), v170, nil, true) and true or v171
+	return p169.Message and (p169.Message ~= "" and string.find(string.lower(p169.Message), v170, nil, true)) and true or v172
+end)
+function refreshMailSearch()
+	-- upvalues: (copy) v_u_167, (ref) v_u_165, (ref) v_u_144
+	local v173 = v_u_167:Search(v_u_165)
+	for _, v174 in pairs(v173) do
+		local v175 = v174[1]
+		local v176 = v174[2]
+		if v175.MailFrame then
+			if v_u_144 then
+				v175.MailFrame.Visible = v_u_144[2] == v175.UID
+			else
+				v175.MailFrame.Visible = v176 == true
+			end
+		end
+	end
+end
+function getMailFromId(p177)
+	-- upvalues: (ref) v_u_161
+	for _, v178 in pairs(v_u_161) do
+		if v178._id == p177 then
+			return v178
+		end
+	end
+	return nil
+end
+local v_u_179 = v12.new()
+local v_u_180 = false
+local v_u_181 = v12.new()
+local v_u_182 = {}
+local v_u_183 = v12.new()
+local v_u_184 = {}
+local function v_u_226()
+	-- upvalues: (ref) v_u_161, (copy) v_u_164, (copy) v_u_11, (copy) v_u_14, (copy) v_u_1, (copy) v_u_18, (copy) v_u_17, (copy) v_u_16, (copy) v_u_3, (copy) v_u_112, (copy) v_u_97, (copy) v_u_118, (ref) v_u_182, (copy) v_u_183, (ref) v_u_180, (copy) v_u_181, (copy) v_u_167, (ref) v_u_165, (copy) v_u_184, (copy) v_u_84, (copy) v_u_163, (ref) v_u_162
+	for _, v_u_185 in pairs(v_u_161) do
+		local v_u_186 = v_u_185._id
+		if not v_u_164:FindFirstChild(v_u_186) then
+			local v187 = v_u_11.new()
+			local v_u_188 = script:WaitForChild("PackageFrame"):Clone()
+			v_u_188.Name = v_u_186
+			v_u_188.Parent = v_u_164
+			local v189 = nil
+			local v190 = nil
+			local v191 = nil
+			local v192 = ""
+			local v193 = ""
+			local v194
+			if v_u_185.item then
+				local v195 = v_u_185.item.ItemId
+				local v196 = v_u_185.item.Category
+				v194 = v_u_14.ConvertToV2CopyData(v_u_185.item.Data)
+				local v197 = v_u_14.GetItemConfig(v196, v195)
+				if v197 then
+					v189 = v197.DisplayName or v195
+					v190 = v197.Rarity or "Basic"
+					local v198 = v197.Icon
+					v_u_188:WaitForChild("Package"):WaitForChild("GiftImage").Image = v198
+					local v199 = v_u_1.InfoTooltip.new()
+					v_u_1.GenerateItemTooltip(v196, v195, v197, v194, v199)
+					if v194[v_u_18.SignedBy] ~= nil then
+						v199:AddItem("Signature", "Signature", 100, v194[v_u_18.SignedBy])
+					end
+					v199:BindToGuiObject(v_u_188:WaitForChild("Package"):WaitForChild("GiftImage"))
+					v187:Add(v199)
+					v192 = v189
+				else
+					v_u_188:WaitForChild("Package"):WaitForChild("GiftImage").Image = ""
+					v194 = v191
+				end
+			else
+				v_u_188:WaitForChild("Package"):WaitForChild("GiftImage").Image = ""
+				v194 = v191
+			end
+			local v200 = v_u_188:WaitForChild("Package"):WaitForChild("GemsIncluded")
+			local v201 = v_u_185.gems
+			if v201 then
+				v201 = v_u_185.gems > 0
+			end
+			v200.Visible = v201
+			if v_u_185.gems and v_u_185.gems > 0 then
+				v_u_188:WaitForChild("Package"):WaitForChild("GemsIncluded"):WaitForChild("GemsAmount").Text = addCommas(v_u_185.gems)
+				v193 = ("%* Gems"):format((v_u_1.Abbreviate(v_u_185.gems)))
+			end
+			local v_u_202 = ("%*%*%*"):format(v192, (v192 == "" or v193 == "") and "" or " and ", v193)
+			v_u_188:WaitForChild("Package"):WaitForChild("GiftName").Text = v_u_185.title or v_u_202
+			v_u_188:WaitForChild("Package"):WaitForChild("Message").Text = ("\"%*\""):format(v_u_185.message)
+			v_u_188:WaitForChild("Package"):WaitForChild("From").Text = "???"
+			task.spawn(function()
+				-- upvalues: (ref) v_u_17, (copy) v_u_185, (copy) v_u_188
+				local v203 = v_u_17
+				local v204 = v_u_185.sender
+				local v205 = v203:getUsername((tonumber(v204)))
+				v_u_188:WaitForChild("Package"):WaitForChild("From").Text = ("@%*"):format(v205)
+			end)
+			v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Claim").Activated:Connect(function()
+				-- upvalues: (ref) v_u_16, (ref) v_u_1, (copy) v_u_186, (ref) v_u_3
+				v_u_16.StartLoading("PostOffice_ClaimMail", "Claiming Mail... Do not leave!")
+				local v206, v207 = v_u_1.Network.Invoke("PostOffice_ClaimMail", v_u_186)
+				v_u_16.StopLoading("PostOffice_ClaimMail")
+				if v206 == true then
+					v_u_1:WaitForModule("Signal").Fire("CreateNotification", "SuccessNotification", 5, {
+						["Text"] = "\226\156\133 Mail successfully collected! \226\156\133"
+					})
+				elseif v207 then
+					local v208 = v_u_3:IsFrameOpen("PostOffice")
+					if v208 == true then
+						v_u_3:CloseFrame("PostOffice")
+					end
+					v_u_1.Signal.Invoke("BigNotify", v207, "Notify")
+					if v208 == true then
+						v_u_3:OpenFrame("PostOffice")
+					end
+				end
+			end)
+			v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Deny").Activated:Connect(function()
+				-- upvalues: (copy) v_u_185, (ref) v_u_3, (ref) v_u_1, (ref) v_u_112, (ref) v_u_97, (copy) v_u_202, (ref) v_u_118, (ref) v_u_16, (copy) v_u_186
+				if v_u_185.canBeRejected then
+					v_u_112("ConfirmReject")
+					switchMenu("Alerts")
+					v_u_97:WaitForChild("ConfirmReject"):WaitForChild("RejectFromRecipient").Text = ("Are you sure you want to reject a mail containing %*? This cannot be undone."):format(v_u_202)
+					v_u_97:WaitForChild("ConfirmReject"):WaitForChild("RejectFromSender").Visible = false
+					v_u_97:WaitForChild("ConfirmReject"):WaitForChild("RejectFromRecipient").Visible = true
+					v_u_97:WaitForChild("ConfirmReject"):WaitForChild("Options"):WaitForChild("Confirm").Visible = v_u_185.canBeRejected == true
+					local v209 = v_u_118(v_u_97:WaitForChild("ConfirmReject"):WaitForChild("Options"))
+					switchMenu("ReceivePackages")
+					if v209 == "Confirm" then
+						v_u_16.StartLoading("PostOffice_RejectMail", "Rejecting Mail... Do not leave!")
+						local v210, v211 = v_u_1.Network.Invoke("PostOffice_RejectMail", v_u_186)
+						v_u_16.StopLoading("PostOffice_RejectMail")
+						if v210 == true then
+							v_u_1:WaitForModule("Signal").Fire("CreateNotification", "SuccessNotification", 5, {
+								["Text"] = "\226\156\133 Mail successfully rejected! \226\156\133"
+							})
+							return
+						end
+						if v211 then
+							local v212 = v_u_3:IsFrameOpen("PostOffice")
+							if v212 == true then
+								v_u_3:CloseFrame("PostOffice")
+							end
+							v_u_1.Signal.Invoke("BigNotify", v211, "Notify")
+							if v212 == true then
+								v_u_3:OpenFrame("PostOffice")
+							end
+						end
+					end
+				else
+					local v213 = v_u_3:IsFrameOpen("PostOffice")
+					if v213 == true then
+						v_u_3:CloseFrame("PostOffice")
+					end
+					v_u_1.Signal.Invoke("BigNotify", "This mail cannot be rejected!", "Notify")
+					if v213 == true then
+						v_u_3:OpenFrame("PostOffice")
+					end
+				end
+			end)
+			v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Select").Activated:Connect(function()
+				-- upvalues: (ref) v_u_182, (copy) v_u_186, (ref) v_u_183
+				if v_u_182[v_u_186] then
+					v_u_182[v_u_186] = nil
+				else
+					v_u_182[v_u_186] = true
+				end
+				v_u_183:Fire()
+			end)
+			local function v217()
+				-- upvalues: (copy) v_u_188, (ref) v_u_180, (ref) v_u_182, (copy) v_u_186
+				v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Claim").Visible = not v_u_180
+				v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Deny").Visible = not v_u_180
+				local v214 = v_u_182[v_u_186] == true
+				v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Select").Text = v214 and "Deselect" or "Select"
+				local v215 = v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Select")
+				local v216
+				if v214 then
+					v216 = Color3.fromRGB(255, 0, 0)
+				else
+					v216 = Color3.fromRGB(0, 217, 0)
+				end
+				v215.BackgroundColor3 = v216
+				v_u_188:WaitForChild("Package"):WaitForChild("Options"):WaitForChild("Select").Visible = v_u_180
+				v_u_188:WaitForChild("Package"):WaitForChild("Selected").Visible = v_u_180 and v214
+			end
+			v217()
+			local v218 = v_u_181:Connect(v217)
+			local v219 = v_u_183:Connect(v217)
+			v187:Add(v218)
+			v187:Add(v219)
+			local v220 = {
+				["ItemDisplay"] = v189,
+				["Rarity"] = v190,
+				["CopyData"] = v194,
+				["Message"] = v_u_185.message
+			}
+			local v221
+			if v_u_185.gems and v_u_185.gems > 0 then
+				v221 = v_u_185.gems
+			else
+				v221 = nil
+			end
+			v220.Gems = v221
+			v220.MailFrame = v_u_188
+			v_u_167:AddObject(v_u_186, v220)
+			v_u_188.Visible = v_u_167:DoesMatch(v_u_165, v220) == true
+			v_u_184[v_u_188] = v187
+		end
+	end
+	for v222, v223 in pairs(v_u_184) do
+		if not getMailFromId(v222.Name) then
+			v223:Destroy()
+			v222:Destroy()
+			v_u_184[v222] = nil
+			v_u_167:RemoveObject(v222.Name)
+		end
+	end
+	local v224 = v_u_84:WaitForChild("Notification"):WaitForChild("RewardNotification")
+	local v225 = #v_u_161
+	v224.Text = tostring(v225)
+	v_u_84:WaitForChild("Notification").Visible = #v_u_161 > 0
+	v_u_163:WaitForChild("BottomBar"):WaitForChild("PackageLimit"):WaitForChild("PackageAmount").Text = ("%*/%*"):format(#v_u_161, 100)
+	v_u_163:WaitForChild("BottomBar").Visible = v_u_162
+	v_u_163:WaitForChild("LoadingBlocker").Visible = not v_u_162
+end
+local v_u_227 = v_u_163:WaitForChild("LoadingBlocker")
+local v_u_228 = v_u_227:WaitForChild("LoadingRing")
+v2.RenderStepped:Connect(function(p229)
+	-- upvalues: (copy) v_u_227, (copy) v_u_228
+	if v_u_227.Visible == true then
+		local v230 = v_u_228
+		v230.Rotation = v230.Rotation + 720 * p229
+	end
+end)
+local v_u_231 = v_u_163:WaitForChild("BottomBar"):WaitForChild("SearchBar"):WaitForChild("SearchBarBox")
+v_u_231.Changed:Connect(function()
+	-- upvalues: (copy) v_u_231, (copy) v_u_1, (copy) v_u_166, (ref) v_u_165, (copy) v_u_179
+	local v232 = v_u_231.Text
+	if v232 == "" then
+		v_u_165 = nil
+	else
+		local v233, v234 = v_u_1.CustomSearch.EvaluateSearchTerm(v232, v_u_166)
+		v_u_165 = {
+			["SearchTerm"] = v233,
+			["MustBeSigned"] = v234.signed,
+			["MustBeUnsigned"] = v234.nonsigned,
+			["MustHaveGems"] = v234.gems
+		}
+	end
+	refreshMailSearch()
+	v_u_179:Fire()
+end)
+v_u_226()
+v_u_1.Network.Fired("PostOffice_InboxChanged"):Connect(function(p235)
+	-- upvalues: (ref) v_u_162, (ref) v_u_161, (copy) v_u_226
+	if p235 then
+		v_u_162 = true
+	else
+		v_u_162 = false
+	end
+	v_u_161 = p235 or {}
+	v_u_226()
+end)
+local function v_u_239()
+	-- upvalues: (ref) v_u_161, (copy) v_u_164
+	local v236 = {}
+	for _, v237 in pairs(v_u_161) do
+		local v238 = v_u_164:FindFirstChild(v237._id)
+		if v238 and v238.Visible then
+			table.insert(v236, v237)
+		end
+	end
+	return v236
+end
+local function v242()
+	-- upvalues: (ref) v_u_180, (ref) v_u_182, (copy) v_u_239, (copy) v_u_163
+	if v_u_180 then
+		local v240 = {}
+		for v241, _ in pairs(v_u_182) do
+			table.insert(v240, v241)
+		end
+		if #v240 >= #v_u_239() then
+			v_u_163:WaitForChild("LeftBar"):WaitForChild("SelectAll"):WaitForChild("SelectAllButton").BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+		else
+			v_u_163:WaitForChild("LeftBar"):WaitForChild("SelectAll"):WaitForChild("SelectAllButton").BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		end
+	end
+	v_u_163:WaitForChild("LeftBar"):WaitForChild("SelectAll").Visible = v_u_180
+end
+v_u_181:Connect(v242)
+v_u_179:Connect(v242)
+v_u_183:Connect(v242)
+v_u_163:WaitForChild("LeftBar"):WaitForChild("SelectAll"):WaitForChild("SelectAllButton").Activated:Connect(function()
+	-- upvalues: (ref) v_u_182, (copy) v_u_239, (copy) v_u_183
+	local v243 = {}
+	for v244, _ in pairs(v_u_182) do
+		table.insert(v243, v244)
+	end
+	local v245 = v_u_239()
+	if #v243 >= #v245 then
+		for _, v246 in pairs((v_u_239())) do
+			v_u_182[v246._id] = nil
+		end
+	else
+		for _, v247 in pairs((v_u_239())) do
+			v_u_182[v247._id] = true
+		end
+	end
+	v_u_183:Fire()
+end)
+local v_u_248 = false
+local v_u_249 = false
+local v_u_250 = v_u_163:WaitForChild("BottomBar"):WaitForChild("MassClaim"):WaitForChild("Button")
+v_u_250.Activated:Connect(function()
+	-- upvalues: (ref) v_u_249, (ref) v_u_248, (ref) v_u_180, (ref) v_u_182, (copy) v_u_3, (copy) v_u_1, (copy) v_u_16, (copy) v_u_183, (copy) v_u_250, (copy) v_u_181
+	if v_u_249 ~= true then
+		if v_u_248 == true then
+			v_u_248 = false
+			v_u_180 = false
+			local v251 = {}
+			for v252, _ in pairs(v_u_182) do
+				table.insert(v251, v252)
+			end
+			if #v251 > 0 then
+				local v253 = v_u_3:IsFrameOpen("PostOffice")
+				if v253 == true then
+					v_u_3:CloseFrame("PostOffice")
+				end
+				local v254 = v_u_1.Signal.Invoke("BigNotify", ("Are you sure you want to bulk claim %* mail%*?"):format(#v251, #v251 == 1 and "" or "s"), "YesNo")
+				if v253 == true then
+					v_u_3:OpenFrame("PostOffice")
+				end
+				if v254 == "YesButton" then
+					v_u_16.StartLoading("PostOffice_BulkClaimMail", "Claiming Mails... Do not leave!")
+					local v255, v256 = v_u_1.Network.Invoke("PostOffice_BulkClaimPackages", v251)
+					v_u_16.StopLoading("PostOffice_BulkClaimMail")
+					if v255 == true then
+						v_u_1:WaitForModule("Signal").Fire("CreateNotification", "SuccessNotification", 5, {
+							["Text"] = ("\226\156\133 %* mails successfully collected! \226\156\133"):format(v256)
+						})
+					elseif v256 then
+						local v257 = v_u_3:IsFrameOpen("PostOffice")
+						if v257 == true then
+							v_u_3:CloseFrame("PostOffice")
+						end
+						v_u_1.Signal.Invoke("BigNotify", v256, "Notify")
+						if v257 == true then
+							v_u_3:OpenFrame("PostOffice")
+						end
+					end
+				end
+			end
+		else
+			v_u_248 = true
+			v_u_180 = true
+		end
+		v_u_182 = {}
+		v_u_183:Fire()
+		v_u_250.Text = v_u_248 and "Finish Claim" or "Claim Mode"
+		v_u_181:Fire()
+	end
+end)
+local v_u_258 = v_u_163:WaitForChild("BottomBar"):WaitForChild("MassDeny"):WaitForChild("Button")
+v_u_258.Activated:Connect(function()
+	-- upvalues: (ref) v_u_248, (ref) v_u_249, (ref) v_u_180, (ref) v_u_182, (copy) v_u_3, (copy) v_u_1, (copy) v_u_16, (copy) v_u_183, (copy) v_u_258, (copy) v_u_181
+	if v_u_248 ~= true then
+		if v_u_249 == true then
+			v_u_249 = false
+			v_u_180 = false
+			local v259 = {}
+			for v260, _ in pairs(v_u_182) do
+				table.insert(v259, v260)
+			end
+			if #v259 > 0 then
+				local v261 = v_u_3:IsFrameOpen("PostOffice")
+				if v261 == true then
+					v_u_3:CloseFrame("PostOffice")
+				end
+				local v262 = v_u_1.Signal.Invoke("BigNotify", ("Are you sure you want to bulk reject %* mail%*?"):format(#v259, #v259 == 1 and "" or "s"), "YesNo")
+				if v261 == true then
+					v_u_3:OpenFrame("PostOffice")
+				end
+				if v262 == "YesButton" then
+					v_u_16.StartLoading("PostOffice_BulkRejectMail", "Rejecting Mails... Do not leave!")
+					local v263, v264 = v_u_1.Network.Invoke("PostOffice_BulkRejectPackages", v259)
+					v_u_16.StopLoading("PostOffice_BulkRejectMail")
+					if v263 == true then
+						v_u_1:WaitForModule("Signal").Fire("CreateNotification", "SuccessNotification", 5, {
+							["Text"] = ("\226\156\133 %* mails successfully rejected! \226\156\133"):format(v264)
+						})
+					elseif v264 then
+						local v265 = v_u_3:IsFrameOpen("PostOffice")
+						if v265 == true then
+							v_u_3:CloseFrame("PostOffice")
+						end
+						v_u_1.Signal.Invoke("BigNotify", v264, "Notify")
+						if v265 == true then
+							v_u_3:OpenFrame("PostOffice")
+						end
+					end
+				end
+			end
+		else
+			v_u_249 = true
+			v_u_180 = true
+		end
+		v_u_182 = {}
+		v_u_183:Fire()
+		v_u_258.Text = v_u_249 and "Finish Deny" or "Deny Mode"
+		v_u_181:Fire()
+	end
+end)
